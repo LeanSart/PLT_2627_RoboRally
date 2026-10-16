@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-project(plt)
+project(plt C CXX)
 
 # CMP0074 policy enable find_* to use <PackageName>_ROOT variables to find
 # packages.
@@ -86,10 +86,14 @@ ${CMAKE_CTEST_COMMAND} -j --output-on-failure --timeout 300 \
     )
 endif()
 
+
 # Build dia2code
 add_subdirectory(extern/dia2code)
 
 # Add PTHREADs Lib
+set(CMAKE_THREAD_LIBS_INIT "-lpthread")
+set(CMAKE_HAVE_THREADS_LIBRARY 1)
+set(CMAKE_USE_PTHREADS_INIT 1)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 message(STATUS "PThreads library found: ${Threads_FOUND}")
@@ -104,8 +108,11 @@ set(MACHINE_ENSEA OFF CACHE BOOL
   "Set MACHINE_ENSEA to ON to build on the CentOS machine at ENSEA")
 
 # Find library jsoncpp
-set(jsoncpp_include_dir "${PROJECT_SOURCE_DIR}/extern/jsoncpp-1.8.0")
-file(GLOB_RECURSE jsoncpp_sources extern/jsoncpp-1.8.0/*.cpp)
+# set(jsoncpp_include_dir "${PROJECT_SOURCE_DIR}/extern/jsoncpp-1.8.0")
+# file(GLOB jsoncpp_sources extern/jsoncpp-1.8.0/src/lib_json/*.cpp)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JSONCPP REQUIRED jsoncpp)
+include_directories(${JSONCPP_INCLUDE_DIRS})
 
 # Find library SFML
 if(WIN32)
