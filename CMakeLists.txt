@@ -108,8 +108,8 @@ set(MACHINE_ENSEA OFF CACHE BOOL
   "Set MACHINE_ENSEA to ON to build on the CentOS machine at ENSEA")
 
 # Find library jsoncpp
-# set(jsoncpp_include_dir "${PROJECT_SOURCE_DIR}/extern/jsoncpp-1.8.0")
-# file(GLOB jsoncpp_sources extern/jsoncpp-1.8.0/src/lib_json/*.cpp)
+set(jsoncpp_include_dir "${PROJECT_SOURCE_DIR}/extern/jsoncpp-1.8.0")
+file(GLOB jsoncpp_sources extern/jsoncpp-1.8.0/src/lib_json/*.cpp)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JSONCPP REQUIRED jsoncpp)
 include_directories(${JSONCPP_INCLUDE_DIRS})
@@ -142,6 +142,7 @@ find_library(
 add_subdirectory(src/shared)
 add_subdirectory(src/client)
 #add_subdirectory(src/server)
+add_subdirectory(src/prj)
 
 # Rapport generation
 add_subdirectory(rapport)

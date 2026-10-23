@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     gdb \
     cmake \
+    pkg-config \
     lcov \
     gcovr \
     git
@@ -24,7 +25,8 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get update && apt-get install -y \
     libsfml-dev \
     libxml2-dev \
-    libboost-all-dev
+    libboost-all-dev \
+    libjsoncpp-dev
 
 RUN apt-get update && apt-get install -y \
     dia libcanberra-gtk3-module \
