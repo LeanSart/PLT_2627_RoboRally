@@ -5,8 +5,11 @@
 #include <sstream>
 
 namespace UMLDiagram {
-    
+    GameEngine::GameEngine () = default;
     void GameEngine::run() {
+        Pile_2_cartes pioche;
+        Programme cartes_programme(0, TypeMouvement::AVANCER_1_CASE); //Valeurs ignorées seules celles du fichier JSON seront prises en compte
+        cartes_programme.loadCartes("./assets/cards/cards_program.json",pioche);
         bool running = true;
         try {
             sf::RenderWindow window;
