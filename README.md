@@ -3,9 +3,6 @@
 Pour lancer le projet :
 
 Pour build les fichiers d'en-tête faire la commande : cmake --build build (peut-être besoin au préalable de : cmake -B build -S .)
-Puis modifier les fichiers d'en-tête suivants : 
-    -  Dans cartes.h(ligne 25) : virtual void loadCartes (const std::string& filePath, Pile_2_cartes& stack) = 0;
-    -  Dans renderEngine.h(ligne 9) : #include <filesystem>
 Puis faire la commande : make clean && make && make run
 
 [![Actions Status](https://github.com/cbares/plt/workflows/PLT%20build/badge.svg)](https://github.com/cbares/plt/actions)
