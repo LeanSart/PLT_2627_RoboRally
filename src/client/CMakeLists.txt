@@ -3,11 +3,15 @@ set(lib_client_target client_static)
 set(client_target client)
 
 # Generate header files from dia UML files
-generate_dia_header("${CMAKE_CURRENT_SOURCE_DIR}/../client.dia")
+file(GLOB DIA_FILES "${PROJECT_SOURCE_DIR}/Dia/*.dia")
+foreach(DIA_FILE ${DIA_FILES})
+    generate_dia_header(${DIA_FILE})
+endforeach()
 
 # Find all source files to include in library
-file(GLOB_RECURSE client_sources *.cpp)
+file(GLOB_RECURSE client_sources CONFIGURE_DEPENDS *.cpp)
 list(REMOVE_ITEM client_sources "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
+
 
 # Build the "client" library, add required include and link against dependencies
 add_library(${lib_client_target} STATIC ${client_sources} ${jsoncpp_sources})
@@ -19,7 +23,7 @@ target_include_directories(${lib_client_target} PUBLIC
   )
 target_link_libraries(${lib_client_target} PUBLIC
   ${SFML_LIBRARIES}
-  $<TARGET_NAME:shared_static>
+#  $<TARGET_NAME:shared_static>
 )
 target_link_libraries(${lib_client_target} PRIVATE
   Threads::Threads
