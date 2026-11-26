@@ -1,12 +1,13 @@
 set(prj_target prj)
- 
+
+generate_dia_header("${PROJECT_SOURCE_DIR}/Dia/file.dia")
 generate_dia_header("${PROJECT_SOURCE_DIR}/Dia/UMLDiagram.dia")
  
 # Tous les .cpp du dossier prj (main.cpp inclus)
-file(GLOB_RECURSE prj_sources *.cpp)
+file(GLOB_RECURSE prj_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
  
 # Exécutable prj : les headers doivent être générés avant la compilation
-add_executable(${prj_target} ${prj_sources})
+add_executable(${prj_target} ${prj_sources} ${jsoncpp_sources})
 add_dependencies(${prj_target} generate-headers)
  
 target_include_directories(${prj_target} PUBLIC

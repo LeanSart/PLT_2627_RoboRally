@@ -1,15 +1,15 @@
 #include "Plateau.h"
 
 #include <SFML/Graphics.hpp>
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
+#include "../../../extern/jsoncpp-1.8.0/json/json.h"
 
 #include <fstream>
-#include <iostream>
+#include <sstream>
+#include <stdexcept>
 
 namespace UMLDiagram {
-Plateau::Plateau(const std::string& BoardPath){
-        loadPlateau(BoardPath);
+Plateau::Plateau(): Hauteur(1), Largeur(1){
+        Grille.resize(Hauteur, std::vector<Case_Plateau>(Largeur));
     }
 
 Case_Plateau Plateau::getCase (Position position){return Grille.at(position.PosX).at(position.PosY);}
@@ -25,27 +25,27 @@ void Plateau::loadPlateau(const std::string& filePath){
     if (!file.is_open()) {
         throw std::runtime_error("Impossible d'ouvrir le fichier : " + filePath);
     }
-    json donneesJson;
+    Json::Value donneesJson;
     try {
         file >> donneesJson;
-    } catch (const json::parse_error& e) {
+    } catch (const Json::Exception& e) {
         throw std::runtime_error("Erreur de syntaxe JSON : " + std::string(e.what()));
     }
      
-    if (donneesJson.contains("width")) {
-        Largeur = donneesJson["width"].get<int>();
+    if (donneesJson.isMember("width")) {
+        Largeur = donneesJson["width"].asInt();
     } else {
         throw std::invalid_argument("Le champ 'width' est introuvable.");
     } 
     
-    if (donneesJson.contains("height")) {
-        Hauteur = donneesJson["height"].get<int>();
+    if (donneesJson.isMember("height")) {
+        Hauteur = donneesJson["height"].asInt();
     } else {
         throw std::invalid_argument("Le champ 'height' est introuvable.");
     }
     std::string grid_json;
-    if (donneesJson.contains("grid")) {
-        grid_json = donneesJson["grid"].get<std::string>();
+    if (donneesJson.isMember("grid")) {
+        grid_json = donneesJson["grid"].asString();
     } else {
         throw std::invalid_argument("Le champ 'grid' est introuvable.");
     }
@@ -57,7 +57,8 @@ void Plateau::loadPlateau(const std::string& filePath){
     while (ss >> cell) { //Parsing des cases plateau en une liste
         cell_list.push_back(cell);
     }
-    
+
+    Grille.clear();
     Grille.assign(Hauteur, std::vector<Case_Plateau>(Largeur));
     int col = 0;
     int row = 0; 

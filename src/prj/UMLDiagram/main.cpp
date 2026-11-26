@@ -3,9 +3,7 @@
 using namespace UMLDiagram;
 
 int main(void){
-    GameEngine engine("assets/boards/CellTest.json");
     RenderEngine render;
-    engine.run();
-    render.run(engine);
+    render.run();
     return 0;
 }

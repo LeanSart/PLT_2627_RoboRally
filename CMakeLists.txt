@@ -109,10 +109,7 @@ set(MACHINE_ENSEA OFF CACHE BOOL
 
 # Find library jsoncpp
 set(jsoncpp_include_dir "${PROJECT_SOURCE_DIR}/extern/jsoncpp-1.8.0")
-file(GLOB jsoncpp_sources extern/jsoncpp-1.8.0/src/lib_json/*.cpp)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(JSONCPP REQUIRED jsoncpp)
-include_directories(${JSONCPP_INCLUDE_DIRS})
+file(GLOB jsoncpp_sources extern/jsoncpp-1.8.0/*.cpp)
 
 # Find library SFML
 if(WIN32)
@@ -139,20 +136,20 @@ find_library(
 )
 
 # Add source subdirectories
-add_subdirectory(src/shared)
-add_subdirectory(src/client)
+#add_subdirectory(src/shared)
+#add_subdirectory(src/client)
 #add_subdirectory(src/server)
 add_subdirectory(src/prj)
 
 # Rapport generation
-add_subdirectory(rapport)
+#add_subdirectory(rapport)
 
 # Unit tests
 include(CTest)
 # Set BUILD_TESTING to OFF in CMakeCache to disable tests
 if(BUILD_TESTING)
   # Include tests scripts
-  add_subdirectory(test)
+  #add_subdirectory(test)
 endif()
 
 

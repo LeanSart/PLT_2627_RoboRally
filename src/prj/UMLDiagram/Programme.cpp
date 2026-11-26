@@ -2,8 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include "Pile_2_cartes.h"
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
+#include "../../../extern/jsoncpp-1.8.0/json/json.h"
 
 namespace UMLDiagram{
 Programme::Programme(int vitesse, TypeMouvement mouvement) 
@@ -36,10 +35,17 @@ void Programme::loadCartes(const std::string& filePath, Pile_2_cartes& stack){
         throw std::runtime_error("Impossible d'ouvrir le fichier : " + filePath);
     }
     try {
-        json data = json::parse(file);
+        Json::Value data;
+        file >> data;
+        if (!data.isArray())
+            throw std::runtime_error("Le JSON doit etre un tableau de cartes");
+
         for (const auto& item : data) {
-            int vitesse = item.at("vitesse").get<int>();
-            std::string mouvStr = item.at("mouvement").get<std::string>();
+            if (!item.isMember("vitesse") || !item.isMember("mouvement"))
+                throw std::runtime_error("Carte invalide : 'vitesse' ou 'mouvement' manquant");
+
+            int vitesse = item["vitesse"].asInt();
+            std::string mouvStr = item["mouvement"].asString();
 
             TypeMouvement mouvement = stringToTypeMouvement(mouvStr);
             auto card = std::make_unique<Programme>(vitesse, mouvement);
@@ -51,5 +57,5 @@ void Programme::loadCartes(const std::string& filePath, Pile_2_cartes& stack){
     }
 
     return;
-    }
+}
 }

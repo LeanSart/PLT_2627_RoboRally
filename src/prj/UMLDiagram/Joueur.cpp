@@ -13,5 +13,13 @@ const Tableau_2_bord& Joueur::getT2B() const {
 Tableau_2_bord& Joueur::getT2B() {
     return tableau_2_bord;
 }
+
+const Robot& Joueur::getRobot() const {
+    return robot;
+}
+
+Robot& Joueur::getRobot() {
+    return robot;
+}
 }
 

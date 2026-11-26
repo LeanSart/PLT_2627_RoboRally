@@ -1,12 +1,22 @@
-#include "RenderEngine.h"
-#include <filesystem>
-#include <algorithm>
-#include <iostream>
-namespace UMLDiagram {
+    #include "RenderEngine.h"
+    #include "Screen.h"
+    #include "ScreenManager.h"
+    #include <filesystem>
+    #include <algorithm>
+    #include <iostream>
+    #include <string>
+    #include <stdexcept>
+    #include "Orientation.h"
+    #include "TypeCase.h"
+    #include "AppContext.h"
+    #include "GameEngine.h"
+    
+    namespace UMLDiagram {
+
     namespace {
-
+        
         /// CONSTANTES
-
+        
         // Disposition de la fenetre (1900 x 1000)
         constexpr unsigned int WINDOW_W = 1900;
         constexpr unsigned int WINDOW_H = 1000;
@@ -135,7 +145,8 @@ namespace UMLDiagram {
 
     }
 
-
+    
+    
     void RenderEngine::renderPlateau(const Plateau& plateau){
         const float cell_size = computeCellSize(plateau);
         float PosY = BOARD_ORIGIN.y + cell_size / 2.f; // centre de la case
@@ -156,7 +167,7 @@ namespace UMLDiagram {
             PosY += cell_size;
         }
     }
-
+    
     void RenderEngine::renderTableau_2_bord(const Tableau_2_bord& t2b) {
         const int activeDamage = MAX_DAMAGE - t2b.getPoint_2_degat();// Points de degats : 10 icones (rouge, jaunes, puis blanches)
         if (activeDamage >= 0 && activeDamage <= MAX_DAMAGE) {
@@ -185,63 +196,78 @@ namespace UMLDiagram {
             window.draw(life);
         }
     }
+    
+    void RenderEngine::renderRobot(const Robot& robot) {
+        sf::Sprite rbt = renderSprite("assets/robots/Robot0.png");
+        // fitSprite(rbt, ...);
+        rbt.setPosition(BOARD_ORIGIN.x + robot.get_position().PosX, BOARD_ORIGIN.y + robot.get_position().PosY);
+        rbt.setRotation(rotationFor(robot.orientation));
+        window.draw(rbt);
+    }
 
-    sf::Sprite RenderEngine::renderSprite(std::string assetfile){
-
-        auto [it, inserted] = textureCache.try_emplace(assetfile);
+    sf::Sprite RenderEngine::renderSprite(std::filesystem::path assetfile){
+        std::string path = assetfile.string();
+        
+        auto [it, inserted] = textureCache.try_emplace(path);
         sf::Texture& texture = it->second;
-
+        
         if (inserted) {
-            if (!texture.loadFromFile(assetfile)) {
+            const bool exists = std::filesystem::is_regular_file(assetfile);
+            if (!exists) {
                 std::cerr << "[Erreur] Impossible de trouver le fichier : " << assetfile << std::endl;
+                texture.loadFromImage(makeFallbackImage());
+            } else if (!texture.loadFromFile(path)) {
+                std::cerr << "[Erreur SFML] Impossible de charger l'image : " << assetfile << std::endl;
                 texture.loadFromImage(makeFallbackImage());
             }
             texture.setSmooth(true);   // lissage : evite l'effet de damier a la reduction
             texture.generateMipmap();
         }
-
+        
         sf::Sprite sprite;
         sprite.setTexture(texture);
         return sprite;
     }
-
-    void RenderEngine::run(const GameEngine& engine){
+    
+    void RenderEngine::run(){
         try{
-        window.create(sf::VideoMode(WINDOW_W, WINDOW_H), "PLT : RoboRally", sf::Style::Titlebar | sf::Style::Close);
-        window.setFramerateLimit(60);
-        //Archive et robot : meme taille qu'une case du plateau, poses sur la meme case
-        const float cell_size = computeCellSize(engine.getPlateau());
-        const sf::Vector2f centre(BOARD_ORIGIN.x + 2.5f * cell_size, BOARD_ORIGIN.y + 2.5f * cell_size); //case (2,2) provisoire
-        sf::Sprite spriteArchive = renderSprite("assets/archive/red.png");
-        sf::Sprite spriteRobot   = renderSprite("assets/robots/Robot0.png");
-        for (sf::Sprite* s : { &spriteArchive, &spriteRobot }) {
-            fitSprite(*s, cell_size);
-            s->setPosition(centre);}
-        while (window.isOpen()){
-            sf::Event event{};
+            window.create(sf::VideoMode(WINDOW_W, WINDOW_H), "PLT : RoboRally", sf::Style::Titlebar | sf::Style::Close);
+            window.setFramerateLimit(60);
             
-            while (window.pollEvent(event)){
-                if (event.type == sf::Event::Closed){
-                    window.close();
-                    break;
+            sf::Font font;
+            const char* fontPath = "assets/fonts/ROBO.ttf";
+            if (!font.loadFromFile(fontPath))
+                throw std::runtime_error(std::string("Impossible de charger la police : ") + fontPath);
+            GameEngine engine = GameEngine();
+            AppContext ctx{window, font, *this, engine};
+            ScreenManager screens(ctx);
+            sf::Clock clock;
+                
+            while (window.isOpen() && !screens.isFinished()){
+                sf::Event event{};
+                while (window.pollEvent(event)){
+                    if (event.type == sf::Event::Closed){
+                        window.close();
+                        break;
+                    }
+                    screens.handleEvent(event);
                 }
+                if (!window.isOpen()) break;
+                
+                screens.update(clock.restart().asSeconds());
+                screens.draw(window);
+                window.display();
+                screens.applyTransition(); // changement d'ecran applique en fin de frame
             }
-            window.clear(sf::Color::Black);
-            //BG.BoardCellGenerator(grid,window);
-            renderPlateau(engine.getPlateau());
-            renderTableau_2_bord(engine.getPlayers().at(0).getT2B());
-            window.draw(spriteArchive);
-            window.draw(spriteRobot);
-        window.display();
-        }
+            if (window.isOpen()) window.close();
         } catch (const std::exception& e) {
             std::cerr << "Erreur : " << e.what() << "\n";
-            // running = false;
         }
     }
-    void RenderEngine::update() {
-        // cartes_programme.affichagepile(pioche);
-        // pioche.shuffle();
-        // cartes_programme.affichagepile(pioche);
+    
+    void RenderEngine::update(const Plateau& plateau,const Robot& robot,const Tableau_2_bord& t2b) {
+        renderPlateau(plateau);
+        renderRobot(robot);
+        renderTableau_2_bord(t2b);
     }
-}
+} // namespace UMLDiagram
