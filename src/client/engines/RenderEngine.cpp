@@ -24,11 +24,11 @@
         constexpr unsigned int WINDOW_W = 1900;
         constexpr unsigned int WINDOW_H = 1000;
 
-        constexpr float MARGIN = 150.f;       // sert uniquement au calcul de la taille des cases (inchange)
-        constexpr float BOARD_MARGIN = 50.f;  // marge entre le plateau et les bords (haut / gauche)
-        constexpr float BOARD_AREA_W = 860.f; // largeur de la zone du plateau (a gauche)
+        constexpr float MARGIN = 20.f;       // sert uniquement au calcul de la taille des cases (inchange)
+        constexpr float BOARD_MARGIN = 20.f;  // marge entre le plateau et les bords (haut / gauche)
+        constexpr float BOARD_AREA_W = 720.f; // largeur de la zone du plateau (a gauche)
 
-        const sf::Vector2f BOARD_ORIGIN{ BOARD_MARGIN + 50.f, BOARD_MARGIN };
+        const sf::Vector2f BOARD_ORIGIN{ BOARD_MARGIN + 40.f, BOARD_MARGIN };
         
         //Tableau de bord à droite
         constexpr float DASH_X   = BOARD_MARGIN + BOARD_AREA_W + 50.f;
@@ -148,12 +148,19 @@
             return i == 0 ? "assets/dashboard/warning/red.png" : "assets/dashboard/warning/yellow.png";
         }
 
+        void fitSpriteContain(sf::Sprite& sprite, float size) {
+            const sf::FloatRect b = sprite.getLocalBounds();
+            if (b.width <= 0.f || b.height <= 0.f) return;
+            sprite.setOrigin(b.width / 2.f, b.height / 2.f);
+            const float scale = size / std::max(b.width, b.height);
+            sprite.setScale(scale, scale);
+        }
+
     }
 
     
     
-    void RenderEngine::renderPlateau(const board::Plateau& plateau){
-        const float cell_size = computeCellSize(plateau);
+    void RenderEngine::renderPlateau(const board::Plateau& plateau, float cell_size){
         float PosY = BOARD_ORIGIN.y + cell_size / 2.f; // centre de la case
         for(auto& row : plateau.Grille){
             float PosX = BOARD_ORIGIN.x + cell_size / 2.f;
@@ -202,10 +209,10 @@
         }
     }
     
-    void RenderEngine::renderRobot(const board::Robot& robot) {
+    void RenderEngine::renderRobot(const board::Robot& robot, float cell_size) {
         sf::Sprite rbt = renderSprite("assets/robots/Robot0.png");
-        // fitSprite(rbt, ...);
-        rbt.setPosition(BOARD_ORIGIN.x + robot.get_position().PosX, BOARD_ORIGIN.y + robot.get_position().PosY);
+        fitSpriteContain(rbt, cell_size);
+        rbt.setPosition(BOARD_ORIGIN.x + robot.get_position().PosX * cell_size + cell_size / 2.f, BOARD_ORIGIN.y + robot.get_position().PosY * cell_size + cell_size / 2.f);
         rbt.setRotation(rotationFor(robot.orientation));
         window.draw(rbt);
     }
@@ -271,8 +278,9 @@
     }
     
     void RenderEngine::update(const board::Plateau& plateau,const board::Robot& robot,const players::Tableau_2_bord& t2b) {
-        renderPlateau(plateau);
-        renderRobot(robot);
+        const float cell_size = computeCellSize(plateau);
+        renderPlateau(plateau, cell_size);
+        renderRobot(robot, cell_size);
         renderTableau_2_bord(t2b);
     }
 } // namespace engines

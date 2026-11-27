@@ -2,7 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 #include "../../../extern/jsoncpp-1.8.0/json/json.h"
-
+#include "file/file.h"
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
@@ -12,7 +12,7 @@ Plateau::Plateau(): Hauteur(1), Largeur(1){
         Grille.resize(Hauteur, std::vector<Case_Plateau>(Largeur));
     }
 
-Case_Plateau Plateau::getCase (Position position){return Grille.at(position.PosX).at(position.PosY);}
+Case_Plateau Plateau::getCase (Position position){return Grille.at(position.PosY).at(position.PosX);}
 
 /**
  * Charge un plateau depuis un fichier JSON.
@@ -20,32 +20,38 @@ Case_Plateau Plateau::getCase (Position position){return Grille.at(position.PosX
  * @param filePath Chemin vers le fichier JSON
  * @return void ou erreur
  */
-void Plateau::loadPlateau(const std::string& filePath){
-    std::ifstream file(filePath);
-    if (!file.is_open()) {
-        throw std::runtime_error("Impossible d'ouvrir le fichier : " + filePath);
+void Plateau::loadPlateau(file::path BoardPath, Orientation orientation, file::path docking_bayPath){
+    std::ifstream Boardfile(BoardPath);
+    std::ifstream Docking_bayfile(docking_bayPath);
+    if (!Boardfile.is_open()) {
+        throw std::runtime_error("Impossible d'ouvrir le fichier : " + BoardPath.string());
     }
-    Json::Value donneesJson;
+    if (!Docking_bayfile.is_open()) {
+        throw std::runtime_error("Impossible d'ouvrir le fichier : " + docking_bayPath.string());
+    }
+    Json::Value BoardDataJson;
+    Json::Value Docking_bayDataJson;
     try {
-        file >> donneesJson;
+        Boardfile >> BoardDataJson;
+        Docking_bayfile >> Docking_bayDataJson;
     } catch (const Json::Exception& e) {
         throw std::runtime_error("Erreur de syntaxe JSON : " + std::string(e.what()));
     }
      
-    if (donneesJson.isMember("width")) {
-        Largeur = donneesJson["width"].asInt();
+    if (BoardDataJson.isMember("width") && Docking_bayDataJson.isMember("width") && BoardDataJson["width"].asInt() == Docking_bayDataJson["width"].asInt()) {
+        Largeur = BoardDataJson["width"].asInt();
     } else {
-        throw std::invalid_argument("Le champ 'width' est introuvable.");
+        throw std::invalid_argument("Le champ 'width' est introuvable ou invalide.");
     } 
     
-    if (donneesJson.isMember("height")) {
-        Hauteur = donneesJson["height"].asInt();
+    if (BoardDataJson.isMember("height") && Docking_bayDataJson.isMember("height")) {
+        Hauteur = BoardDataJson["height"].asInt() + Docking_bayDataJson["height"].asInt();
     } else {
         throw std::invalid_argument("Le champ 'height' est introuvable.");
     }
     std::string grid_json;
-    if (donneesJson.isMember("grid")) {
-        grid_json = donneesJson["grid"].asString();
+    if (BoardDataJson.isMember("grid") && Docking_bayDataJson.isMember("grid")) {
+        grid_json = set_Board_Orientation(BoardDataJson["grid"].asString(), orientation, Largeur, BoardDataJson["height"].asInt()) + " " + Docking_bayDataJson["grid"].asString();
     } else {
         throw std::invalid_argument("Le champ 'grid' est introuvable.");
     }
@@ -151,5 +157,48 @@ void Plateau::loadPlateau(const std::string& filePath){
         if(row == (Hauteur)) {break;}
     }
     return;
+}
+
+std::string Plateau::set_Board_Orientation(std::string Board_grid,Orientation orientation, int Width, int Height){
+    std::vector<std::string> cell_list;
+    std::stringstream ss(Board_grid);
+    std::string cell;
+    
+    while (ss >> cell) { //Parsing des cases plateau en une liste
+        cell_list.push_back(cell);
+    }
+
+    if((int)cell_list.size() != Width*Height){
+        throw std::invalid_argument(" 'grid' ne correspond pas à la taille du plateau");
+    }
+
+    std::string output_grid;
+    switch (orientation)
+    {
+    case EST:
+        for (int c = 0; c < Width; ++c) {
+                for (int r = Height - 1; r >= 0; --r) {
+                    if (!output_grid.empty()) output_grid += " ";
+                    output_grid += cell_list[r * Width + c];
+                }
+        }
+        return output_grid;
+    case SUD:
+        for (int i = cell_list.size() - 1; i >= 0; --i) {
+                if (!output_grid.empty()) output_grid += " ";
+                output_grid += cell_list[i];
+        }
+        return output_grid;
+    case OUEST: 
+        for (int c = Width - 1; c >= 0; --c) {
+                for (int r = 0; r < Height; ++r) {
+                    if (!output_grid.empty()) output_grid += " ";
+                    output_grid += cell_list[r * Width + c];
+                }
+        }
+        return output_grid;
+    default:
+        return Board_grid;
+    }
 }
 }

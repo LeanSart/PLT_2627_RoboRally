@@ -1,9 +1,8 @@
 # PLT
 
-Pour lancer le projet :
+Pour build les fichiers d'en-tête faire la commande : cmake -B build -S . && cmake --build build 
 
-Pour build les fichiers d'en-tête faire la commande : cmake --build build (peut-être besoin au préalable de : cmake -B build -S .)
-Puis faire la commande : make clean && make && make run
+Puis pour executer faire : ./bin/client
 
 [![Actions Status](https://github.com/cbares/plt/workflows/PLT%20build/badge.svg)](https://github.com/cbares/plt/actions)
 

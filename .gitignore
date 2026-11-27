@@ -10,3 +10,5 @@ src/**/*.h
 tmp
 .env
 .devcontainer
+saves/*
+.vscode/*

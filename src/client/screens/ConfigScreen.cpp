@@ -1,15 +1,15 @@
 
 #include "ConfigScreen.h"
 #include "engines/GameEngine.h"
+#include "file/file.h"
 #include <algorithm>
-#include <filesystem>
 #include <system_error>
 #include <fstream>
 #include <iostream>
 #include <cmath>
 #include "../../../extern/jsoncpp-1.8.0/json/json.h"
 
-namespace fs = std::filesystem;
+
 namespace screens{
     inline void centerText(sf::Text& text, sf::Vector2f pos) {
         const sf::FloatRect r = text.getLocalBounds();
@@ -39,10 +39,10 @@ namespace screens{
         retour("Retour", {cx, 850.f}, context.font) {
     
         // Liste des plateaux disponibles
-        std::error_code ec;
-        for (const auto& entry : fs::directory_iterator("assets/boards", ec)) {
-            if (entry.is_regular_file() && entry.path().extension() == ".json")
-                plateaux.push_back(entry.path().generic_string());
+        const file::path& boards_dir = file::path("assets/boards");
+        for (const auto& entry : file::file::directory_iterator(boards_dir)) {
+            if (entry.is_regular_file() && entry.extension() == ".json")
+                plateaux.push_back(entry.string());
         }
         std::sort(plateaux.begin(), plateaux.end());
     
@@ -76,13 +76,16 @@ namespace screens{
 
     void ConfigScreen::launchNewGame() {
         if (name.empty()) name = "nouvelle_course";
-        std::string plateau_name = fs::path(current_plateau).stem().string();
+        std::string plateau_name = file::path(current_plateau).stem().string();
 
         Json::Value save_data;
         save_data["nb_joueurs"] = current_nb_joueurs;
         save_data["plateau"] = plateau_name;
-        fs::path file_path = "saves/" + name + ".json";
-        std::ofstream file(file_path);
+        save_data["orientation_plateau"] = static_cast<int>(board::Orientation::SUD);
+        save_data["docking_bay"] = "Docking_Bay_1";
+
+        file::path file_path = "saves/" + name + ".json";
+        std::ofstream file(file_path.string());
 
         if (file.is_open()) {
             Json::StreamWriterBuilder builder;
@@ -90,7 +93,7 @@ namespace screens{
             file << Json::writeString(builder, save_data);
             file.close();
         } else {
-            std::cerr << "Erreur : impossible de créer le fichier " << file_path << std::endl;
+            std::cerr << "Erreur : impossible de créer le fichier " << file_path.string() << std::endl;
         }
         if (ctx.engine.load(file_path)) {
             ctx.goTo(ScreenId::PARTIE);
@@ -109,7 +112,7 @@ namespace screens{
         labelJoueurs.setString("Joueurs : " + std::to_string(current_nb_joueurs));
         centerText(labelJoueurs, {cx, Y_JOUEURS});
     
-        labelPlateau.setString("Plateau : " + fs::path(current_plateau).stem().string());
+        labelPlateau.setString("Plateau : " + file::path(current_plateau).stem().string());
         centerText(labelPlateau, {cx, Y_PLATEAU});
     }
     
